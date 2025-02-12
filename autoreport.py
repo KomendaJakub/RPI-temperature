@@ -12,10 +12,11 @@ from confidential import EMAIL, PASSWORD, MAIL_SERVER, DESTINATION
 
 
 today = dt.datetime.now()
-first_day = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+first_day = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - dt.timedelta(1)
 last_date = monthrange(today.year, today.month)[1]
 last_day = today.replace(day=last_date, hour=23, minute=59,second=59, microsecond=0)
 data = [str(int(first_day.timestamp())), str(int(last_day.timestamp()))]
+print(data)
 
 con = sqlite3.connect("/media/temp_data.db")
 cur = con.cursor()
