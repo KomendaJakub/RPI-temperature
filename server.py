@@ -13,12 +13,15 @@ logging.basicConfig(filename="./server.log", format=FORMAT)
 # Setup the database connection
 con = sqlite3.connect("/media/temp_data.db")
 cur = con.cursor()
+#cur.execute("CREATE TABLE sensor0(time, temperature, humidity)")
+#cur.execute("CREATE TABLE sensor1(time, temperature, humidity)")
+#cur.execute("CREATE TABLE sensor2(time, temperature, humidity)")
 
 # Set up regex
 matcher = re.compile(r"(\d*\.\d*), (\d*), (\d*\.\d*), (\d*\.\d*)")
 
 # Setup the TCP server
-TCP_IP = '192.168.1.43'
+TCP_IP = '192.168.0.247'
 TCP_PORT = 51378
 BUFFER_SIZE = 1024
 
@@ -51,4 +54,5 @@ while True:
 
     cur.execute("INSERT INTO sensor" + id +" VALUES (?, ?, ?)", (time, temperature, humidity))
     con.commit()
+
 
