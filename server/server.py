@@ -4,6 +4,15 @@ import socket
 import sqlite3
 import re
 import logging
+import json
+
+# Setup the TCP server
+with open("server_config.json") as file:
+    config = json.load(file)
+
+TCP_IP = config["TCP_IP"]
+TCP_PORT = int(config["TCP_PORT"])
+BUFFER_SIZE = 1024
 
 # Set up the logger
 logger = logging.getLogger(__name__)
@@ -17,10 +26,6 @@ cur = con.cursor()
 # Set up regex
 matcher = re.compile(r"(\d*\.\d*), (\d*), (\d*\.\d*), (\d*\.\d*)")
 
-# Setup the TCP server
-TCP_IP = '192.168.1.43'
-TCP_PORT = 51378
-BUFFER_SIZE = 1024
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((TCP_IP, TCP_PORT))
@@ -45,10 +50,10 @@ while True:
 
     d = d.split(", ")
     time = d[0]
-    id = d[1]
+    sensor_id = d[1]
     temperature = float(d[2])
     humidity = float(d[3])
 
-    cur.execute("INSERT INTO sensor" + id +" VALUES (?, ?, ?)", (time, temperature, humidity))
+    cur.execute("INSERT INTO sensors VALUES (?, ?, ?, ?)",
+                (sensor_id, time, temperature, humidity))
     con.commit()
-

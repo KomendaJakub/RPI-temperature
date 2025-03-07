@@ -7,8 +7,23 @@ import logging
 import time
 import random
 import os
+import json
+
+# Constants
+with open("sensor_config.json") as file:
+    config = json.load(file)
+
+TCP_IP = config["TCP_IP"]
+TCP_PORT = int(config["TCP_PORT"])
+BUFFER_SIZE = 1024
+ID = int(config["ID"])
+
+if ID == '':
+    raise SystemExit()
 
 # Function definitions
+
+
 def get_measurement():
 
     bus.write_i2c_block_data(0x45, 0x2C, [0x06])
@@ -19,33 +34,38 @@ def get_measurement():
     data = bus.read_i2c_block_data(0x45, 0x00, 6)
     return data
 
+
 def data_to_message(data):
-# Convert the data
+    # Convert the data
     temp = data[0] * 256 + data[1]
     cTemp = -45 + (175 * temp / 65535.0)
-    fTemp = -49 + (315 * temp / 65535.0)
+#    fTemp = -49 + (315 * temp / 65535.0)
     humidity = 100 * (data[3] * 256 + data[4]) / 65535.0
-    MESSAGE = str(time.time()) + ", " + str(ID) + ", " + str(cTemp) + ", " + str(humidity)
+    MESSAGE = str(time.time()) + ", " + str(ID) + ", " + \
+        str(cTemp) + ", " + str(humidity)
     MESSAGE = MESSAGE.encode('utf-8')
     return MESSAGE
 
+
 def send_to_server(message):
-# Send data over TCP
+    # Send data over TCP
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     err = s.connect_ex((TCP_IP, TCP_PORT))
-    if(err):
-        if(err == 113):
+    if (err):
+        if (err == 113):
             logging.error(f"Error {err} the server is down")
             time.sleep(random.randrange(0, 60))
         else:
-            logging.critical(f"Error {err} unhandled case while connecting to server")
+            logging.critical(
+                f"Error {err} unhandled case while connecting to server")
             time.sleep(random.randrange(0, 60))
 
     else:
         s.send(message)
-        data = s.recv(BUFFER_SIZE)
+#        data = s.recv(BUFFER_SIZE)
         s.close()
         time.sleep(60)
+
 
 # Set up the logger
 logger = logging.getLogger(__name__)
@@ -55,11 +75,6 @@ logging.basicConfig(filename="/home/pi/Documents/sensor.log", format=FORMAT)
 # Get I2C bus
 bus = smbus.SMBus(1)
 
-# Set up the TCP client
-TCP_IP = "192.168.1.43"
-TCP_PORT = 51378
-BUFFER_SIZE = 1024
-ID = 0
 
 logging.info("Starting the program")
 
