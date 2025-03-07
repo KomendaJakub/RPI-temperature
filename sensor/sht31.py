@@ -10,7 +10,7 @@ import os
 import json
 
 # Constants
-with open("sensor_config.json") as file:
+with open("/home/pi/Documents/RPI-temperature/sensor/sensor_config.json") as file:
     config = json.load(file)
 
 TCP_IP = config["TCP_IP"]
@@ -70,7 +70,7 @@ def send_to_server(message):
 # Set up the logger
 logger = logging.getLogger(__name__)
 FORMAT = '%(asctime)s %(levelname)s %(message)s'
-logging.basicConfig(filename="/home/pi/Documents/sensor.log", format=FORMAT)
+logging.basicConfig(filename="/home/pi/Documents/RPI-temperature/sensor/sensor.log", format=FORMAT)
 
 # Get I2C bus
 bus = smbus.SMBus(1)
