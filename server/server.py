@@ -29,13 +29,10 @@ cur = con.cursor()
 # Set up regex
 matcher = re.compile(r"(\d*\.\d*), (\d*), (\d*\.\d*), (\d*\.\d*)")
 
-<<<<<<< HEAD:server/server.py
-=======
 # Setup the TCP server
 TCP_IP = '192.168.0.247'
 TCP_PORT = 51378
 BUFFER_SIZE = 1024
->>>>>>> refs/remotes/origin/main:server.py
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((TCP_IP, TCP_PORT))
