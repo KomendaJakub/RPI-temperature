@@ -75,6 +75,14 @@ logging.basicConfig(filename="/home/pi/Documents/RPI-temperature/sensor/sensor.l
 # Get I2C bus
 bus = smbus.SMBus(1)
 
+<<<<<<< Updated upstream:sensor/sht31.py
+=======
+# Set up the TCP client
+TCP_IP = "192.168.0.247"
+TCP_PORT = 51378
+BUFFER_SIZE = 1024
+ID = 2
+>>>>>>> Stashed changes:sht31.py
 
 logging.info("Starting the program")
 
