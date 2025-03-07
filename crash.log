@@ -2,3 +2,20 @@ Traceback (most recent call last):
   File "/home/pi/Documents/RPI-temperature/server.py", line 29, in <module>
     s.bind((TCP_IP, TCP_PORT))
 OSError: [Errno 99] Cannot assign requested address
+/bin/sh: 1: /home/pi/Documents/RPI-temperature/server.py: not found
+  File "/home/pi/Documents/RPI-temperature/server/server.py", line 32
+    <<<<<<< HEAD:server/server.py
+    ^^
+SyntaxError: invalid syntax
+  File "/home/pi/Documents/RPI-temperature/server/server.py", line 32
+    <<<<<<< HEAD:server/server.py
+    ^^
+SyntaxError: invalid syntax
+  File "/home/pi/Documents/RPI-temperature/server/server.py", line 32
+    <<<<<<< HEAD:server/server.py
+    ^^
+SyntaxError: invalid syntax
+  File "/home/pi/Documents/RPI-temperature/server/server.py", line 32
+    <<<<<<< HEAD:server/server.py
+    ^^
+SyntaxError: invalid syntax

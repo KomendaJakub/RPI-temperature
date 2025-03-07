@@ -10,7 +10,7 @@ import json
 import smtplib
 from email.message import EmailMessage
 
-with open("autoreport_config.json") as file:
+with open("/home/pi/Documents/RPI-temperature/autoreport/autoreport_config.json") as file:
     config = json.load(file)
 
 EMAIL = config["EMAIL"]
