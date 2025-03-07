@@ -19,3 +19,11 @@ SyntaxError: invalid syntax
     <<<<<<< HEAD:server/server.py
     ^^
 SyntaxError: invalid syntax
+  File "/home/pi/Documents/RPI-temperature/server/server.py", line 32
+    <<<<<<< HEAD:server/server.py
+    ^^
+SyntaxError: invalid syntax
+  File "/home/pi/Documents/RPI-temperature/server/server.py", line 32
+    <<<<<<< HEAD:server/server.py
+    ^^
+SyntaxError: invalid syntax

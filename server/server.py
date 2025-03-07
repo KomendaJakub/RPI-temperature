@@ -67,8 +67,4 @@ while True:
     cur.execute("INSERT INTO sensors VALUES (?, ?, ?, ?)",
                 (sensor_id, time, temperature, humidity))
     con.commit()
-<<<<<<< HEAD:server/server.py
-=======
 
-
->>>>>>> refs/remotes/origin/main:server.py
