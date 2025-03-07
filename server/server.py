@@ -7,7 +7,7 @@ import logging
 import json
 
 # Setup the TCP server
-with open("server_config.json") as file:
+with open("/home/pi/Documents/RPI-temperature/server/server_config.json") as file:
     config = json.load(file)
 
 TCP_IP = config["TCP_IP"]
@@ -61,7 +61,7 @@ while True:
     temperature = float(d[2])
     humidity = float(d[3])
 
-    cur.execute("INSERT INTO sensors VALUES (?, ?, ?, ?)",
+    cur.execute("INSERT INTO sensors (sensor_id, time, temperature, humidity) VALUES (?, ?, ?, ?)",
                 (sensor_id, time, temperature, humidity))
     con.commit()
 

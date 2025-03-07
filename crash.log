@@ -31,3 +31,34 @@ SyntaxError: invalid syntax
     <<<<<<< HEAD:server/server.py
     ^^
 SyntaxError: invalid syntax
+Traceback (most recent call last):
+  File "/home/pi/Documents/RPI-temperature/server/server.py", line 10, in <module>
+    with open("server_config.json") as file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'server_config.json'
+Traceback (most recent call last):
+  File "/home/pi/Documents/RPI-temperature/server/server.py", line 10, in <module>
+    with open("/home/pi/server/server_config.json") as file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/pi/server/server_config.json'
+Traceback (most recent call last):
+  File "/home/pi/Documents/RPI-temperature/server/server.py", line 11, in <module>
+    config = json.load(file)
+             ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Expecting property name enclosed in double quotes: line 6 column 1 (char 57)
+Traceback (most recent call last):
+  File "/home/pi/Documents/RPI-temperature/server/server.py", line 64, in <module>
+    cur.execute("INSERT INTO sensors VALUES (?, ?, ?, ?)",
+sqlite3.OperationalError: table sensors has 5 columns but 4 values were supplied
