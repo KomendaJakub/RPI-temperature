@@ -1,2 +1,5 @@
 confidential*
+./autoreport/autoreport_config.json
+./server/server_config.json
+./sensor/sensor_config.json
 export
