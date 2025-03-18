@@ -6,7 +6,7 @@ It sends the processed data to the server using TCP.
 The server stores the data in a sqlite3 database.
 
 
-<b> SET UP <b>
+<b> SET UP </b>
 The user should set up a cronjob or some other scheduling task to keep both the server and sensor code running. 
 The user needs to set up a sqlite3 database that the server will use. You can find sample code in the sensor/sensor.py 
 
@@ -27,7 +27,7 @@ OPT: The user could set up a GUI for viewing the gathered data. In our case GRAF
 <b> Switching to a new network: </b>
 First the sensors should be given the new network’s SSID and PASSWORD, do this as documented here in: [a link](https://www.seeedstudio.com/blog/2021/01/25/three-methods-to-configure-raspberry-pi-wifi/?srsltid=AfmBOopN5twctvxUWjDAO6SzB95za2vgWbr4DA9oEp3GeQ7nkWzSwtuG)
 section -> Method 2: Enable Wifi via wpa_supplicant do this using an SD-card reader.
-<b>Do not try to power up the sensor before doing this as it will go into a boot loop!<b>
+<b>Do not try to power up the sensor before doing this as it will go into a boot loop!<b/>
 
 Then you should connect the server and get its new IP address that will be used later. 
 In the next step all the IP addresses have to be manually reconfigured in the following files:
