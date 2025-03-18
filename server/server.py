@@ -5,37 +5,42 @@ import sqlite3
 import re
 import logging
 import json
+import os
+
+# Constants
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+DIR_PATH = os.path.dirname(__file__)
+CONFIG_PATH = os.path.join(DIR_PATH, 'server_config.json')
+LOG_PATH = os.path.join(DIR_PATH, 'sensor.log')
 
 # Setup the TCP server
-with open("/home/pi/Documents/RPI-temperature/server/server_config.json") as file:
+with open(CONFIG_PATH) as file:
     config = json.load(file)
 
-TCP_IP = config["TCP_IP"]
-TCP_PORT = int(config["TCP_PORT"])
+SERVER_IP = config["SERVER_IP"]
+SERVER_PORT = int(config["SERVER_PORT"])
+DATABASE_PATH = config(["DATABASE_ABS_PATH"])
 BUFFER_SIZE = 1024
 
 # Set up the logger
 logger = logging.getLogger(__name__)
 FORMAT = '%(asctime)s %(levelname)s %(message)s'
-logging.basicConfig(filename="./server.log", format=FORMAT)
+logging.basicConfig(filename=LOG_PATH, format=FORMAT)
 
 # Setup the database connection
+
+# TODO : Change this to be DATABASE_PATH when changing to systemd scheduling
 con = sqlite3.connect("/media/temp_data.db")
 cur = con.cursor()
-#cur.execute("CREATE TABLE sensor0(time, temperature, humidity)")
-#cur.execute("CREATE TABLE sensor1(time, temperature, humidity)")
-#cur.execute("CREATE TABLE sensor2(time, temperature, humidity)")
+# cur.execute("CREATE TABLE sensors(sensor_id, time, temperature, humidity)")
 
 # Set up regex
 matcher = re.compile(r"(\d*\.\d*), (\d*), (\d*\.\d*), (\d*\.\d*)")
 
 # Setup the TCP server
-TCP_IP = '192.168.0.247'
-TCP_PORT = 51378
-BUFFER_SIZE = 1024
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((TCP_IP, TCP_PORT))
+s.bind((SERVER_IP, SERVER_PORT))
 s.listen(1)
 
 while True:
@@ -64,4 +69,3 @@ while True:
     cur.execute("INSERT INTO sensors (sensor_id, time, temperature, humidity) VALUES (?, ?, ?, ?)",
                 (sensor_id, time, temperature, humidity))
     con.commit()
-

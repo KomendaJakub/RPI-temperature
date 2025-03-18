@@ -1,6 +1,7 @@
 {
 
-  "TCP_IP"   : "",
-  "TCP_PORT" : "",
-  "ID"       : ""
+  "SERVER_IP"   : "",
+  "SERVER_PORT" : "",
+  "SENSOR_ID"   : ""
+
 }

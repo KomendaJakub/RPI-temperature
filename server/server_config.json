@@ -1,6 +1,7 @@
 {
 
-  "TCP_IP" : "",
-  "TCP_PORT" : "",
+  "SERVER_IP" : "",
+  "SERVER_PORT" : "",
+  "DATABASE_ABS_PATH" : ""
 
 }

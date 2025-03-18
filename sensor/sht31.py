@@ -9,17 +9,30 @@ import random
 import os
 import json
 
+
 # Constants
-with open("/home/pi/Documents/RPI-temperature/sensor/sensor_config.json") as file:
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+DIR_PATH = os.path.dirname(__file__)
+CONFIG_PATH = os.path.join(DIR_PATH, 'sensor_config.json')
+LOG_PATH = os.path.join(DIR_PATH, 'sensor.log')
+
+with open(CONFIG_PATH) as file:
     config = json.load(file)
 
-TCP_IP = config["TCP_IP"]
-TCP_PORT = int(config["TCP_PORT"])
+# Set up the TCP client
+SERVER_IP = config["SERVER_IP"]
+SERVER_PORT = int(config["SERVER_PORT"])
 BUFFER_SIZE = 1024
-ID = int(config["ID"])
+SENSOR_ID = int(config["SENSOR_ID"])
 
-if ID == '':
+if SENSOR_ID == '':
     raise SystemExit()
+
+# Set up the logger
+logger = logging.getLogger(__name__)
+FORMAT = '%(asctime)s %(levelname)s %(message)s'
+logging.basicConfig(filename=LOG_PATH, format=FORMAT)
+
 
 # Function definitions
 
@@ -41,16 +54,16 @@ def data_to_message(data):
     cTemp = -45 + (175 * temp / 65535.0)
 #    fTemp = -49 + (315 * temp / 65535.0)
     humidity = 100 * (data[3] * 256 + data[4]) / 65535.0
-    MESSAGE = str(time.time()) + ", " + str(ID) + ", " + \
+    message = str(time.time()) + ", " + str(SENSOR_ID) + ", " + \
         str(cTemp) + ", " + str(humidity)
-    MESSAGE = MESSAGE.encode('utf-8')
-    return MESSAGE
+    message = message.encode('utf-8')
+    return message
 
 
 def send_to_server(message):
     # Send data over TCP
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    err = s.connect_ex((TCP_IP, TCP_PORT))
+    err = s.connect_ex((SERVER_IP, SERVER_PORT))
     if (err):
         if (err == 113):
             logging.error(f"Error {err} the server is down")
@@ -67,19 +80,8 @@ def send_to_server(message):
         time.sleep(60)
 
 
-# Set up the logger
-logger = logging.getLogger(__name__)
-FORMAT = '%(asctime)s %(levelname)s %(message)s'
-logging.basicConfig(filename="/home/pi/Documents/RPI-temperature/sensor/sensor.log", format=FORMAT)
-
 # Get I2C bus
 bus = smbus.SMBus(1)
-
-# Set up the TCP client
-TCP_IP = "192.168.0.247"
-TCP_PORT = 51378
-BUFFER_SIZE = 1024
-ID = 2
 
 
 logging.info("Starting the program")
