@@ -3,9 +3,7 @@
 # Imports
 import socket
 import smbus
-import logging
 import time
-import random
 import os
 import json
 
@@ -14,7 +12,6 @@ import json
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 DIR_PATH = os.path.dirname(__file__)
 CONFIG_PATH = os.path.join(DIR_PATH, 'sensor_config.json')
-LOG_PATH = os.path.join(DIR_PATH, 'sensor.log')
 
 with open(CONFIG_PATH) as file:
     config = json.load(file)
@@ -26,13 +23,8 @@ BUFFER_SIZE = 1024
 SENSOR_ID = int(config["SENSOR_ID"])
 
 if SENSOR_ID == '':
-    raise SystemExit()
-
-# Set up the logger
-logger = logging.getLogger(__name__)
-FORMAT = '%(asctime)s %(levelname)s %(message)s'
-logging.basicConfig(filename=LOG_PATH, format=FORMAT)
-
+    raise SystemExit(
+        "No sensor ID was specified. Specify in sensor_config.json.")
 
 # Function definitions
 
@@ -63,41 +55,14 @@ def data_to_message(data):
 def send_to_server(message):
     # Send data over TCP
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    err = s.connect_ex((SERVER_IP, SERVER_PORT))
-    if (err):
-        if (err == 113):
-            logging.error(f"Error {err} the server is down")
-            time.sleep(random.randrange(0, 60))
-        else:
-            logging.critical(
-                f"Error {err} unhandled case while connecting to server")
-            time.sleep(random.randrange(0, 60))
-
-    else:
-        s.send(message)
+    s.connect((SERVER_IP, SERVER_PORT))
+    s.send(message)
 #        data = s.recv(BUFFER_SIZE)
-        s.close()
-        time.sleep(60)
+    s.close()
 
 
 # Get I2C bus
 bus = smbus.SMBus(1)
-
-
-logging.info("Starting the program")
-
-while True:
-    try:
-        data = get_measurement()
-        message = data_to_message(data)
-        send_to_server(message)
-
-    except OSError as OSe:
-        if OSe.errno == 110:
-            logging.error(f"{OSe}")
-            os.system("sudo reboot")
-        logging.error(f"{OSe} I2C down")
-        time.sleep(60)
-    except Exception as e:
-        logging.critical(f"Error {e} unhandled exception")
-        time.sleep(60)
+data = get_measurement()
+message = data_to_message(data)
+send_to_server(message)
