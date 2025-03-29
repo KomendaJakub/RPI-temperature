@@ -1,7 +1,5 @@
 {
-
-  "SERVER_IP"   : "",
-  "SERVER_PORT" : "",
-  "SENSOR_ID"   : ""
-
+    "SERVER_IP": "192.168.1.1",
+    "SERVER_PORT": "65432",
+    "SENSOR_ID": "1"
 }
