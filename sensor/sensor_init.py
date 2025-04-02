@@ -6,6 +6,21 @@ import getpass
 import pwd
 import subprocess
 
+try:
+    import smbus
+except ImportError:
+    print("You don't have the smbus library installed.")
+    print("Trying to install.")
+    err = subprocess.run(f"sudo apt update", shell=True)
+    if err.returncode() != 0:
+        print(f"There was an error trying to install the dependencies {err}")
+        raise SystemExit()
+    err = subprocess.run(f"sudo apt install python3-smbus", shell=True)
+    if err.returncode() != 0:
+        print(f"There was an error trying to install the dependencies {err}")
+        raise SystemExit()
+
+
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 DIR_PATH = os.path.dirname(__file__)
 SCRIPT_PATH = os.path.join(DIR_PATH, 'sht31.py')
