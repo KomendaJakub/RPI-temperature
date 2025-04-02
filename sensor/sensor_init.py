@@ -11,7 +11,7 @@ try:
 except ImportError:
     print("You don't have the smbus library installed.")
     print("Trying to install.")
-    err = subprocess.run(f"sudo apt install python3-smbus", shell=True)
+    err = subprocess.run(f"sudo apt-get install python3-smbus -y", shell=True)
 
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
