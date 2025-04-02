@@ -134,24 +134,21 @@ if process_answer(answer):
         file.writelines(lines)
 
     print("Reloading the systemctl daemon!")
-    err = subprocess.run("sudo systemctl daemon-reload",
-                         shell=True, check=True)
+    err = subprocess.run("sudo systemctl daemon-reload", shell=True, check=True)
     if err.returncode != 0:
         print(err)
         print("Error could not reload daemon.")
         raise SystemExit()
 
     print("Enabling the timer!")
-    err = subprocess.run(f"sudo systemctl enable {
-                         service_name}.timer", shell=True)
+    err = subprocess.run(f"sudo systemctl enable {service_name}.timer", shell=True)
     if err.returncode != 0:
         print(err)
         print("Error could not enable the timer")
         raise SystemExit()
 
     print("Starting the timer!")
-    err = subprocess.run(f"sudo systemctl start {
-                         service_name}.timer", shell=True)
+    err = subprocess.run(f"sudo systemctl start {service_name}.timer", shell=True)
     if err.returncode != 0:
         print(err)
         print("Error could start the timer")
