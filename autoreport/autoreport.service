@@ -1,0 +1,9 @@
+[Unit]
+Description=Email the temperature and humidity date collected last month.
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/pi/Documents/RPI-temperature/autoreport/autoreport.py
+User=pi
+
+

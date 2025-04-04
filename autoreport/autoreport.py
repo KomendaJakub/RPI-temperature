@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import datetime as dt
-from calendar import monthrange
 import sqlite3
 import zipfile
 import os
@@ -10,23 +9,29 @@ import json
 import smtplib
 from email.message import EmailMessage
 
-with open("/home/pi/Documents/RPI-temperature/autoreport/autoreport_config.json") as file:
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+DIR_PATH = os.path.dirname(__file__)
+CONFIG_PATH = os.path.join(DIR_PATH, 'autoreport_config.json')
+
+with open(CONFIG_PATH) as file:
     config = json.load(file)
 
 EMAIL = config["EMAIL"]
 PASSWORD = config["PASSWORD"]
 MAIL_SERVER = config["MAIL_SERVER"]
 DESTINATION = config["DESTINATION"]
+DB_PATH = config["DATABASE_PATH"]
 
 today = dt.datetime.now()
-first_day = today.replace(day=1, hour=0, minute=0,
-                          second=0, microsecond=0) - dt.timedelta(1)
-last_date = monthrange(today.year, today.month)[1]
-last_day = today.replace(day=last_date, hour=23,
-                         minute=59, second=59, microsecond=0)
+last_day = today.replace(day=1, hour=23, minute=59,
+                         second=59, microsecond=0) - dt.timedelta(days=1)
+
+first_day = last_day.replace(day=1)
+
 data = [str(int(first_day.timestamp())), str(int(last_day.timestamp()))]
 
-con = sqlite3.connect("/media/temp_data.db")
+
+con = sqlite3.connect(DB_PATH)
 cur = con.cursor()
 
 res = cur.execute("SELECT * FROM sensors WHERE (time BETWEEN ? AND ?);", data)
