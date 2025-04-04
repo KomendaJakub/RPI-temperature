@@ -20,7 +20,7 @@ EMAIL = config["EMAIL"]
 PASSWORD = config["PASSWORD"]
 MAIL_SERVER = config["MAIL_SERVER"]
 DESTINATION = config["DESTINATION"]
-DB_PATH = config["DATABASE_PATH"]
+DATABASE_PATH = config["DATABASE_PATH"]
 
 today = dt.datetime.now()
 last_day = today.replace(day=1, hour=23, minute=59,
@@ -31,7 +31,7 @@ first_day = last_day.replace(day=1)
 data = [str(int(first_day.timestamp())), str(int(last_day.timestamp()))]
 
 
-con = sqlite3.connect(DB_PATH)
+con = sqlite3.connect(DATABASE_PATH)
 cur = con.cursor()
 
 res = cur.execute("SELECT * FROM sensors WHERE (time BETWEEN ? AND ?);", data)

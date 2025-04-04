@@ -1,0 +1,13 @@
+[Unit]
+Description=Temperature monitoring Server
+After=network-online.target
+
+[Service]
+Type=simple
+User=pi
+ExecStart=/usr/bin/python3 /home/pi/Documents/RPI-temperature/server/server.py
+Restart=always
+RestartSec=60s
+
+[Install]
+WantedBy=multi-user.target

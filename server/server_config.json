@@ -2,6 +2,6 @@
 
   "SERVER_IP" : "",
   "SERVER_PORT" : "",
-  "DATABASE_ABS_PATH" : ""
+  "DATABASE_PATH" : ""
 
 }

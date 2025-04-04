@@ -19,7 +19,7 @@ with open(CONFIG_PATH) as file:
 
 SERVER_IP = config["SERVER_IP"]
 SERVER_PORT = int(config["SERVER_PORT"])
-DATABASE_PATH = config(["DATABASE_ABS_PATH"])
+DATABASE_PATH = config(["DATABASE_PATH"])
 BUFFER_SIZE = 1024
 
 # Set up the logger
@@ -29,8 +29,7 @@ logging.basicConfig(filename=LOG_PATH, format=FORMAT)
 
 # Setup the database connection
 
-# TODO : Change this to be DATABASE_PATH when changing to systemd scheduling
-con = sqlite3.connect("/media/temp_data.db")
+con = sqlite3.connect(DATABASE_PATH)
 cur = con.cursor()
 # cur.execute("CREATE TABLE sensors(sensor_id, time, temperature, humidity)")
 
@@ -52,7 +51,7 @@ while True:
             break
         d = data
 #        print("Received data:", data)
-        conn.send(data)
+#        conn.send(data)
     conn.close()
 
     d = d.decode('utf-8')
