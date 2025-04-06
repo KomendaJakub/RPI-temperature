@@ -2,69 +2,161 @@
 
 import socket
 import sqlite3
-import re
-import logging
 import json
 import os
+import selectors
 
-# Constants
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-DIR_PATH = os.path.dirname(__file__)
-CONFIG_PATH = os.path.join(DIR_PATH, 'server_config.json')
-LOG_PATH = os.path.join(DIR_PATH, 'sensor.log')
 
-# Setup the TCP server
-with open(CONFIG_PATH) as file:
-    config = json.load(file)
+def udp_command_handle(socket, mask):
+    udp_data, addr = udp_client.recvfrom(BUFFER_SIZE)
+    # print(udp_data)
 
-SERVER_IP = config["SERVER_IP"]
-SERVER_PORT = int(config["SERVER_PORT"])
-DATABASE_PATH = config(["DATABASE_PATH"])
-BUFFER_SIZE = 1024
+    try:
+        params = json.loads(udp_data.decode())
 
-# Set up the logger
-logger = logging.getLogger(__name__)
-FORMAT = '%(asctime)s %(levelname)s %(message)s'
-logging.basicConfig(filename=LOG_PATH, format=FORMAT)
+    except json.JSONDecodeError as err:
+        print(err)
+        print()
+        print(f"Incorrect json format {udp_data} sent from {addr}")
+        return False
 
-# Setup the database connection
+    foreign_keys = params.keys().sort()
+    expected_keys = ["MAGIC", "COMMAND", "VERSION"].sort()
+    if expected_keys != foreign_keys:
+        print(f"Incorrect keys in udp_data {udp_data} sent from {addr}")
+        return False
 
-con = sqlite3.connect(DATABASE_PATH)
-cur = con.cursor()
-# cur.execute("CREATE TABLE sensors(sensor_id, time, temperature, humidity)")
+    elif params["MAGIC"] != MAGIC:
+        print(f"Incorrect magic in udp_data {udp_data} sent from {addr}")
+        return False
 
-# Set up regex
-matcher = re.compile(r"(\d*\.\d*), (\d*), (\d*\.\d*), (\d*\.\d*)")
+    expected_commands = ["GET_ID", "GET_IP"]
+    if params["COMMAND"] not in expected_commands:
+        print(f"Incorrect command in udp_data {udp_data} sent from {addr}")
+        return False
 
-# Setup the TCP server
+    command = params["COMMAND"]
+    version = params["VERSION"]
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((SERVER_IP, SERVER_PORT))
-s.listen(1)
+    if command == "GET_ID":
+        message = {
+            "MAGIC": MAGIC,
+            "VERSION": version,
+            "TCP_PORT": TCP_PORT,
+            "SENSOR_ID": CURRENT_ID
+        }
 
-while True:
-    conn, addr = s.accept()
-#    print("Connection address: ", addr)
+        config["CURRENT_ID"] = int(config["CURRENT_ID"]) + 1
+        with open(CONFIG_PATH, 'w') as file:
+            json.dump(config, file, indent=4)
+
+    elif command == "GET_IP":
+        message = {
+            "MAGIC": MAGIC,
+            "VERSION": version,
+            "TCP_PORT": TCP_PORT,
+        }
+
+    message = str.encode(json.dumps(message, indent=4))
+    udp_client.sendto(message, addr)
+    return True
+
+
+def tcp_accept(socket, mask):
+    conn, addr = tcp_server.accept()
+    # print("Connection address: ", addr)
+
     while True:
-        data = conn.recv(BUFFER_SIZE)
-        if not data:
+        tcp_data = conn.recv(BUFFER_SIZE)
+        if not tcp_data:
             break
-        d = data
-#        print("Received data:", data)
-#        conn.send(data)
+        params = tcp_data
+        # print("Received data:", data)
+        # conn.sendall(data)
     conn.close()
 
-    d = d.decode('utf-8')
-    if matcher.match(d) is None:
-        logger.warning(f"Unexpected data {d} from {addr}")
-        continue
+    try:
+        params = json.loads(params.decode())
+    except json.JSONDecodeError as err:
+        print(err)
+        print()
+        print(f"Incorrect json format {tcp_data} sent from {addr}")
+        return False
 
-    d = d.split(", ")
-    time = d[0]
-    sensor_id = d[1]
-    temperature = float(d[2])
-    humidity = float(d[3])
+    expected_keys = ["time", "sensor_id", "temperature",
+                     "humidity", "MAGIC", "VERSION"].sort()
+    foreign_keys = params.keys().sort()
+    if expected_keys != foreign_keys:
+        print(f"Incorrect keys in tcp_data {tcp_data} sent from {addr}")
+        return False
+
+    elif params["MAGIC"] != MAGIC:
+        print(f"Incorrect magic in tcp_data {tcp_data} sent from {addr}")
+        return False
+
+    time = params["time"]
+    sensor_id = int(params["sensor_id"])
+    temperature = float(params["temperature"])
+    humidity = float(params["humidity"])
 
     cur.execute("INSERT INTO sensors (sensor_id, time, temperature, humidity) VALUES (?, ?, ?, ?)",
                 (sensor_id, time, temperature, humidity))
     con.commit()
+    return True
+
+
+if __name__ == "__main__":
+
+    # Constants
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    DIR_PATH = os.path.dirname(__file__)
+    CONFIG_PATH = os.path.join(DIR_PATH, 'server_config.json')
+    LOG_PATH = os.path.join(DIR_PATH, 'sensor.log')
+
+    with open(CONFIG_PATH) as file:
+        config = json.load(file)
+
+    # TODO: Get your own IP address at init
+    SERVER_IP = config["SERVER_IP"]
+    TCP_PORT = int(config["TCP_PORT"])
+    UDP_PORT = int(config["UDP_PORT"])
+    DATABASE_PATH = config["DATABASE_PATH"]
+    BUFFER_SIZE = int(config["BUFFER_SIZE"])
+    CURRENT_ID = int(config["CURRENT_ID"])
+    MAGIC = config["MAGIC"]
+    VERSION = config["VERSION"]
+
+    # Setup the database connection
+
+    con = sqlite3.connect(DATABASE_PATH)
+    cur = con.cursor()
+
+    # TODO: If table does not exist, create a table
+
+    # cur.execute("CREATE TABLE sensors(sensor_id, time, temperature, humidity)")
+
+    # Setup udp client
+    udp_client = socket.socket(
+        socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    udp_client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    udp_client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    udp_client.bind(("", UDP_PORT))
+    udp_client.setblocking(False)
+
+    # Setup the TCP server
+    tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    tcp_server.bind((SERVER_IP, TCP_PORT))
+    tcp_server.listen(25)
+    tcp_server.setblocking(False)
+
+    # Setup for multiplexing
+    selector = selectors.DefaultSelector()
+    selector.register(udp_client, selectors.EVENT_READ, udp_command_handle)
+    selector.register(tcp_server, selectors.EVENT_READ, tcp_accept)
+
+    while True:
+        events = selector.select()
+        for key, mask in events:
+            callback = key.data
+            callback(key.fileobj, mask)
