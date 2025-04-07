@@ -20,8 +20,8 @@ def udp_command_handle(socket, mask):
         print(f"Incorrect json format {udp_data} sent from {addr}")
         return False
 
-    foreign_keys = params.keys().sort()
-    expected_keys = ["MAGIC", "COMMAND", "VERSION"].sort()
+    foreign_keys = sorted(params.keys())
+    expected_keys = sorted(["MAGIC", "COMMAND", "VERSION"])
     if expected_keys != foreign_keys:
         print(f"Incorrect keys in udp_data {udp_data} sent from {addr}")
         return False
@@ -83,9 +83,9 @@ def tcp_accept(socket, mask):
         print(f"Incorrect json format {tcp_data} sent from {addr}")
         return False
 
-    expected_keys = ["time", "sensor_id", "temperature",
-                     "humidity", "MAGIC", "VERSION"].sort()
-    foreign_keys = params.keys().sort()
+    expected_keys = sorted(["time", "sensor_id", "temperature",
+                            "humidity", "MAGIC", "VERSION"])
+    foreign_keys = sorted(params.keys())
     if expected_keys != foreign_keys:
         print(f"Incorrect keys in tcp_data {tcp_data} sent from {addr}")
         return False
