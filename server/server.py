@@ -1,38 +1,84 @@
 #!/usr/bin/env python3
 
+# Imports
 import socket
 import sqlite3
 import json
 import os
 import selectors
+import logging
+
+# Define classes
+
+
+class Config():
+
+    def __init__(self, data={}):
+        self.server_ip = data.get("SERVER_IP")
+        self.tcp_port = int(data.get("TCP_PORT"))
+        self.udp_port = int(data.get("UDP_PORT"))
+        self.database_path = data.get("DATABASE_PATH")
+        self.buffer_size = int(data.get("BUFFER_SIZE"))
+        self.current_id = int(data.get("CURRENT_ID"))
+        self.magic = data.get("MAGIC")
+        self.version = int(data.get("VERSION"))
+
+    def load(self, config_path):
+        with open(config_path) as file:
+            temp = json.load(file)
+
+        self.server_ip = temp.get("SERVER_IP")
+        self.tcp_port = int(temp.get("TCP_PORT"))
+        self.udp_port = int(temp.get("UDP_PORT"))
+        self.database_path = temp.get("DATABASE_PATH")
+        self.buffer_size = int(temp.get("BUFFER_SIZE"))
+        self.current_id = int(temp.get("CURRENT_ID"))
+        self.magic = temp.get("MAGIC")
+        self.version = int(temp.get("VERSION"))
+
+    def save(self, config_path):
+        temp = {
+            "SERVER_IP": self.server_ip,
+            "TCP_PORT": self.tcp_port,
+            "UDP_PORT": self.udp_port,
+            "DATABASE_PATH": self.database_path,
+            "BUFFER_SIZE": self.buffer_size,
+            "CURRENT_ID": self.current_id,
+            "MAGIC": self.magic,
+            "VERSION": self.version
+        }
+
+        with open(config_path, "w") as file:
+            json.dump(temp, file)
 
 
 def udp_command_handle(socket, mask):
-    udp_data, addr = udp_client.recvfrom(BUFFER_SIZE)
+    udp_data, addr = udp_client.recvfrom(config.buffer_size)
     # print(udp_data)
 
     try:
         params = json.loads(udp_data.decode())
 
-    except json.JSONDecodeError as err:
-        print(err)
-        print()
-        print(f"Incorrect json format {udp_data} sent from {addr}")
+    except json.JSONDecodeError:
+        logging.warning(f"Incorrect json format {udp_data} sent from {addr}")
         return False
 
     foreign_keys = sorted(params.keys())
     expected_keys = sorted(["MAGIC", "COMMAND", "VERSION"])
     if expected_keys != foreign_keys:
-        print(f"Incorrect keys in udp_data {udp_data} sent from {addr}")
+        logging.warning(f"Incorrect keys in udp_data {
+                        udp_data} sent from {addr}")
         return False
 
-    elif params["MAGIC"] != MAGIC:
-        print(f"Incorrect magic in udp_data {udp_data} sent from {addr}")
+    elif params["MAGIC"] != config.magic:
+        logging.warning(f"Incorrect magic in udp_data {
+                        udp_data} sent from {addr}")
         return False
 
     expected_commands = ["GET_ID", "GET_IP"]
     if params["COMMAND"] not in expected_commands:
-        print(f"Incorrect command in udp_data {udp_data} sent from {addr}")
+        logging.warning(f"Incorrect command in udp_data {
+                        udp_data} sent from {addr}")
         return False
 
     command = params["COMMAND"]
@@ -40,21 +86,23 @@ def udp_command_handle(socket, mask):
 
     if command == "GET_ID":
         message = {
-            "MAGIC": MAGIC,
+            "MAGIC": config.magic,
             "VERSION": version,
-            "TCP_PORT": TCP_PORT,
-            "SENSOR_ID": CURRENT_ID
+            "TCP_PORT": config.tcp_port,
+            "SENSOR_ID": config.current_id
         }
 
-        config["CURRENT_ID"] = int(config["CURRENT_ID"]) + 1
-        with open(CONFIG_PATH, 'w') as file:
-            json.dump(config, file, indent=4)
+        config.current_id += 1
+
+        config.save(CONFIG_PATH)
+
+        # TODO: Create a graphana panel through the API
 
     elif command == "GET_IP":
         message = {
-            "MAGIC": MAGIC,
+            "MAGIC": config.magic,
             "VERSION": version,
-            "TCP_PORT": TCP_PORT,
+            "TCP_PORT": config.tcp_port,
         }
 
     message = str.encode(json.dumps(message, indent=4))
@@ -67,7 +115,7 @@ def tcp_accept(socket, mask):
     # print("Connection address: ", addr)
 
     while True:
-        tcp_data = conn.recv(BUFFER_SIZE)
+        tcp_data = conn.recv(config.buffer_size)
         if not tcp_data:
             break
         params = tcp_data
@@ -78,75 +126,95 @@ def tcp_accept(socket, mask):
     try:
         params = json.loads(params.decode())
     except json.JSONDecodeError as err:
-        print(err)
-        print()
-        print(f"Incorrect json format {tcp_data} sent from {addr}")
+        logging.warning(f"Incorrect json format {tcp_data} sent from {addr}")
         return False
 
-    expected_keys = sorted(["time", "sensor_id", "temperature",
-                            "humidity", "MAGIC", "VERSION"])
+    expected_keys = sorted(
+        ["time", "sensor_id", "temperature", "humidity", "MAGIC", "VERSION"])
     foreign_keys = sorted(params.keys())
+
     if expected_keys != foreign_keys:
-        print(f"Incorrect keys in tcp_data {tcp_data} sent from {addr}")
+        logging.warning(f"Incorrect keys in tcp_data {
+                        tcp_data} sent from {addr}")
         return False
 
-    elif params["MAGIC"] != MAGIC:
-        print(f"Incorrect magic in tcp_data {tcp_data} sent from {addr}")
+    elif params["MAGIC"] != config.magic:
+        logging.warning(f"Incorrect magic in tcp_data {
+                        tcp_data} sent from {addr}")
         return False
 
-    time = params["time"]
-    sensor_id = int(params["sensor_id"])
-    temperature = float(params["temperature"])
-    humidity = float(params["humidity"])
+        time = params["time"]
+        sensor_id = int(params["sensor_id"])
+        temperature = float(params["temperature"])
+        humidity = float(params["humidity"])
 
-    cur.execute("INSERT INTO sensors (sensor_id, time, temperature, humidity) VALUES (?, ?, ?, ?)",
-                (sensor_id, time, temperature, humidity))
-    con.commit()
-    return True
+        cur.execute("""
+            INSERT INTO sensors (sensor_id, time, temperature, humidity)
+            VALUES (?, ?, ?, ?)
+            """, (sensor_id, time, temperature, humidity))
+        con.commit()
+        return True
+
+        # Connects to Google DNS server to determine the IP address
+        # used for communication
+
+
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    ip = s.getsockname()[0]
+    s.close()
+    return ip
 
 
 if __name__ == "__main__":
 
     # Constants
+
+    # Set current working directory to the directory of this script
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     DIR_PATH = os.path.dirname(__file__)
     CONFIG_PATH = os.path.join(DIR_PATH, 'server_config.json')
-    LOG_PATH = os.path.join(DIR_PATH, 'sensor.log')
+    LOG_PATH = os.path.join(DIR_PATH, 'server.log')
 
-    with open(CONFIG_PATH) as file:
-        config = json.load(file)
+    # TODO: Get command line arguments and set up logging level based on them
 
-    # TODO: Get your own IP address at init
-    SERVER_IP = config["SERVER_IP"]
-    TCP_PORT = int(config["TCP_PORT"])
-    UDP_PORT = int(config["UDP_PORT"])
-    DATABASE_PATH = config["DATABASE_PATH"]
-    BUFFER_SIZE = int(config["BUFFER_SIZE"])
-    CURRENT_ID = int(config["CURRENT_ID"])
-    MAGIC = config["MAGIC"]
-    VERSION = config["VERSION"]
+    FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(filename=LOG_PATH, filemode="a",
+                        format=FORMAT, level=logging.WARNING)
 
-    # Setup the database connection
+    config = Config()
+    config.load(CONFIG_PATH)
 
-    con = sqlite3.connect(DATABASE_PATH)
+    # Get the current IP of the server and save it for later
+    config.server_ip = get_ip()
+    config.save(CONFIG_PATH)
+
+    con = sqlite3.connect(config.database_path)
     cur = con.cursor()
 
-    # TODO: If table does not exist, create a table
-
-    # cur.execute("CREATE TABLE sensors(sensor_id, time, temperature, humidity)")
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS sensors(
+            sensor_id INTEGER,
+            time INTEGER,
+            temperature REAL,
+            humidity REAL
+            )
+            """)
 
     # Setup udp client
     udp_client = socket.socket(
         socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     udp_client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     udp_client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    udp_client.bind(("", UDP_PORT))
+    udp_client.bind(("", config.udp_port))
     udp_client.setblocking(False)
 
     # Setup the TCP server
     tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    tcp_server.bind((SERVER_IP, TCP_PORT))
+    tcp_server.bind((config.server_ip, config.tcp_port))
     tcp_server.listen(25)
     tcp_server.setblocking(False)
 

@@ -6,31 +6,34 @@ import smbus
 import time
 import os
 import json
+import logging
+
 
 # Class definitions
 
 
 class Config():
 
-    def __init__(self, data):
-        self.server_ip = data["SERVER_IP"]
-        self.tcp_port = int(data["TCP_PORT"])
-        self.udp_port = int(data["UDP_PORT"])
-        self.buffer_size = int(data["BUFFER_SIZE"])
-        self.sensor_id = int(data["SENSOR_ID"])
-        self.version = int(data["VERSION"])
-        self.magic = data["MAGIC"]
+    def __init__(self, data={}):
+        self.server_ip = data.get("SERVER_IP")
+        self.tcp_port = data.get("TCP_PORT")
+        self.udp_port = int(data.get("UDP_PORT"))
+        self.buffer_size = int(data.get("BUFFER_SIZE"))
+        self.sensor_id = data.get("SENSOR_ID")
+        self.version = int(data.get("VERSION"))
+        self.magic = data.get("MAGIC")
 
     def load(self, config_path):
         with open(config_path) as file:
             temp = json.load(file)
-            self.server_ip = temp["SERVER_IP"]
-            self.tcp_port = int(temp["TCP_PORT"])
-            self.udp_port = int(temp["UDP_PORT"])
-            self.buffer_size = int(temp["BUFFER_SIZE"])
-            self.sensor_id = int(temp["SENSOR_ID"])
-            self.version = int(temp["VERSION"])
-            self.magic = temp["MAGIC"]
+
+            self.server_ip = temp.get("SERVER_IP")
+            self.tcp_port = temp.get("TCP_PORT")
+            self.udp_port = int(temp.get("UDP_PORT"))
+            self.buffer_size = int(temp.get("BUFFER_SIZE"))
+            self.sensor_id = temp.get("SENSOR_ID")
+            self.version = int(temp.get("VERSION"))
+            self.magic = temp.get("MAGIC")
 
     def save(self, config_path):
         temp = {
@@ -63,15 +66,14 @@ def udp_send(command):
 
     message = str.encode(json.dumps(message, indent=4))
 
+    # Broadcast through UDP and wait for server's response
     udp_server.sendto(message, ("255.255.255.255", config.udp_port))
     data, addr = udp_server.recvfrom(config.buffer_size)
 
     try:
         data = json.loads(data.decode())
-    except json.JSONDecodeError as err:
-        print(err)
-        print()
-        print(f"Incorrect json format {data} sent from {addr}")
+    except json.JSONDecodeError:
+        logging.warning(f"Incorrect json format {data} sent from {addr}")
         raise SystemExit()
 
     foreign_keys = sorted(data.keys())
@@ -81,12 +83,13 @@ def udp_send(command):
         expected_keys = sorted(["MAGIC", "VERSION", "TCP_PORT"])
 
     if expected_keys != foreign_keys:
-        print(f"Incorrect keys in data {data} sent from {addr}")
+        logging.warning(f"Incorrect keys in data {data} sent from {addr}")
         raise SystemExit()
 
     # Validate data
     if not (data["MAGIC"] == config.magic and data["VERSION"] == config.version):
-        print(f"Incorrect MAGIC or VERSION in data {data} sent from {addr}")
+        logging.warning(f"Incorrect MAGIC or VERSION in data {
+                        data} sent from {addr}")
         raise SystemExit()
 
     return data, addr
@@ -144,18 +147,12 @@ def tcp_send(message, server_address):
 
         # data = s.recv(BUFFER_SIZE)
         s.close()
-    except ConnectionRefusedError as err:
-        print(err)
-        print("Error: Connection refused")
-        print("Trying to get server IP")
-
+    except ConnectionRefusedError:
+        logging.warning("Connection refused, trying to get server IP.")
         get_ip()
 
-    except Exception as err:
-        print(err)
-        print("Error while sending data")
-        print("Trying to get server IP")
-
+    except Exception:
+        logging.warning("Could not send data, trying to get server IP.")
         get_ip()
 
 
@@ -164,11 +161,20 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     DIR_PATH = os.path.dirname(__file__)
     CONFIG_PATH = os.path.join(DIR_PATH, 'sensor_config.json')
+    LOG_PATH = os.path.join(DIR_PATH, 'sensor.log')
 
     config = Config()
     config.load(CONFIG_PATH)
 
-    if config.sensor_id == '':
+    FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(filename=LOG_PATH, filemode="a",
+                        format=FORMAT, level=logging.WARNING)
+
+    if config.sensor_id is None:
+        logging.warning(
+            f"No sensor ID in config, trying to request ID from the server.")
+
         # Request an ID from the server
         data, addr = udp_send("GET_ID")
 
@@ -178,9 +184,14 @@ if __name__ == "__main__":
 
         config.save(CONFIG_PATH)
 
-    if config.server_ip == '' or config.tcp_port == '':
+    if config.server_ip is None or config.tcp_port is None:
+        logging.warning(
+            f"Server IP unknown, trying to request IP from the server.")
         # Request an IP from the server
         get_ip()
+
+    config.sensor_id = int(config.sensor_id)
+    config.tcp_port = int(config.tcp_port)
 
     data = get_measurement()
     message = data_to_message(data)

@@ -1,0 +1,7 @@
+[Unit]
+Description=Running the sensor
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/pi/RPI-temperature/sensor/sht31.py
+User=pi
