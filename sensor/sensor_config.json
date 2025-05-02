@@ -1,9 +1,9 @@
 {
-    "SERVER_IP": "",
-    "TCP_PORT": "",
+    "SERVER_IP": null,
+    "TCP_PORT": null,
     "UDP_PORT": "37021",
     "BUFFER_SIZE": "1024",
-    "SENSOR_ID": "",
+    "SENSOR_ID": null,
     "VERSION": "1",
     "MAGIC": "SENS"
 }
