@@ -56,19 +56,19 @@ def udp_command_handle(socket, mask):
     foreign_keys = sorted(params.keys())
     expected_keys = sorted(["MAGIC", "COMMAND", "VERSION"])
     if expected_keys != foreign_keys:
-        logging.warning(f"Incorrect keys in udp_data {
-                        udp_data} sent from {addr}")
+        logging.warning(f"""Incorrect keys in udp_data {
+                        udp_data} sent from {addr}""")
         return False
 
     elif params["MAGIC"] != config.magic:
-        logging.warning(f"Incorrect magic in udp_data {
-                        udp_data} sent from {addr}")
+        logging.warning(f"""Incorrect magic in udp_data {
+                        udp_data} sent from {addr}""")
         return False
 
     expected_commands = ["GET_ID", "GET_IP"]
     if params["COMMAND"] not in expected_commands:
-        logging.warning(f"Incorrect command in udp_data {
-                        udp_data} sent from {addr}")
+        logging.warning(f"""Incorrect command in udp_data {
+                        udp_data} sent from {addr}""")
         return False
 
     command = params["COMMAND"]
@@ -124,13 +124,13 @@ def tcp_accept(socket, mask):
     foreign_keys = sorted(params.keys())
 
     if expected_keys != foreign_keys:
-        logging.warning(f"Incorrect keys in tcp_data {
-                        tcp_data} sent from {addr}")
+        logging.warning(f"""Incorrect keys in tcp_data {
+                        tcp_data} sent from {addr}""")
         return False
 
     elif params["MAGIC"] != config.magic:
-        logging.warning(f"Incorrect magic in tcp_data {
-                        tcp_data} sent from {addr}")
+        logging.warning(f"""Incorrect magic in tcp_data {
+                        tcp_data} sent from {addr}""")
         return False
 
         time = params["time"]

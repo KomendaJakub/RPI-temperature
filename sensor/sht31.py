@@ -79,8 +79,8 @@ def udp_send(command):
 
     # Validate data
     if not (data["MAGIC"] == config.magic and data["VERSION"] == config.version):
-        logging.warning(f"Incorrect MAGIC or VERSION in data {
-                        data} sent from {addr}")
+        logging.warning(f"""Incorrect MAGIC or VERSION in data {
+                        data} sent from {addr}""")
         raise SystemExit()
 
     return data, addr
