@@ -5,14 +5,14 @@ The SHT31 sensor periodically takes temperature and humidity measurements.
 It sends the processed data to the server using TCP.
 The server stores the data in a sqlite3 database.
 
-<b> DEPENDENCIES <b/>
+<b> DEPENDENCIES </b>
 python3-smbus
 
 <b> SET UP </b>
 The user should set up a cronjob or some other scheduling task to keep both the server running.
 The user also needs to set up a sqlite3 database that the server will use. 
 
-<b>Optional<b/> The user could set up a GUI for viewing the gathered data. In our case GRAFANA was used.
+<b>Optional</b> The user could set up a GUI for viewing the gathered data. In our case GRAFANA was used.
 
 
 <b> Adding a new sensor: </b> 
@@ -23,7 +23,7 @@ The user also needs to set up a sqlite3 database that the server will use.
 2. Use the sensor initialization [script](/sensor/sensor_init.py) to configure the server's IP, port and the sensor's ID. The script can also create a systemd service for you automatically. Manual configuration possible through [config_file](/sensor/sensor_config.py).
 
 
-3. <b>Optional<b/> Create a new panel on Grafana by clicking on an existing panel ...->more->duplicate. On the new panel ...->edit change the ID by which the table is selected to the new sensor’s ID.
+3. <b>Optional</b> Create a new panel on Grafana by clicking on an existing panel ...->more->duplicate. On the new panel ...->edit change the ID by which the table is selected to the new sensor’s ID.
 
 
 <b> Switching to a new network: </b>

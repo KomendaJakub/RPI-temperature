@@ -13,16 +13,6 @@ import logging
 
 class Config():
 
-    def __init__(self, data={}):
-        self.server_ip = data.get("SERVER_IP")
-        self.tcp_port = int(data.get("TCP_PORT"))
-        self.udp_port = int(data.get("UDP_PORT"))
-        self.database_path = data.get("DATABASE_PATH")
-        self.buffer_size = int(data.get("BUFFER_SIZE"))
-        self.current_id = int(data.get("CURRENT_ID"))
-        self.magic = data.get("MAGIC")
-        self.version = int(data.get("VERSION"))
-
     def load(self, config_path):
         with open(config_path) as file:
             temp = json.load(file)

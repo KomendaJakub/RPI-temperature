@@ -14,15 +14,6 @@ import logging
 
 class Config():
 
-    def __init__(self, data={}):
-        self.server_ip = data.get("SERVER_IP")
-        self.tcp_port = data.get("TCP_PORT")
-        self.udp_port = int(data.get("UDP_PORT"))
-        self.buffer_size = int(data.get("BUFFER_SIZE"))
-        self.sensor_id = data.get("SENSOR_ID")
-        self.version = int(data.get("VERSION"))
-        self.magic = data.get("MAGIC")
-
     def load(self, config_path):
         with open(config_path) as file:
             temp = json.load(file)
