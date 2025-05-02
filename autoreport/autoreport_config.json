@@ -1,9 +1,9 @@
 {
 
-  "EMAIL"         : "",
-  "PASSWORD"      : "",
-  "MAIL_SERVER"   : "",
-  "DESTINATION"   : "",
-  "DATABASE_PATH" : ""
+  "EMAIL"         : null,
+  "PASSWORD"      : null,
+  "MAIL_SERVER"   : null,
+  "DESTINATION"   : null,
+  "DATABASE_PATH" : null
 
 }

@@ -51,10 +51,10 @@ with zipfile.ZipFile(file_name, "w", zipfile.ZIP_DEFLATED) as zipped:
 
 msg = EmailMessage()
 
-msg.set_content("Dobry den, \n Prosim pripravte spravu z interneho merania teploty a vlhkosti za mesiac " + month_year.replace("_", "/") +
-                " podla manualu. \n V prilohe najdete data, ktore treba prilozit. \n Dakujem! \n\n\n Toto je automatizovana sprava, prosim neodpovedajte na nu.")
+msg.set_content(f"""Dobrý deň, \n Prosím pripravte správu z interného merania teploty a vlhkosti za mesiac {month_year.replace(
+    "_", "/")} podľa manuálu. \n V prílohe nájdete dáta, ktoré treba priložiť. \n Ďakujem! \n\n\n Toto je automatizovaná správa, prosím neodpovedajte na ňu.""")
 
-msg['Subject'] = "Data z merania " + month_year
+msg['Subject'] = "Dáta z merania " + month_year
 msg['From'] = EMAIL
 msg['To'] = DESTINATION
 
