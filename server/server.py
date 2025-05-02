@@ -39,7 +39,7 @@ class Config():
         }
 
         with open(config_path, "w") as file:
-            json.dump(temp, file)
+            json.dump(temp, file, indent=4)
 
 
 def udp_command_handle(socket, mask):
@@ -133,20 +133,20 @@ def tcp_accept(socket, mask):
                         tcp_data} sent from {addr}""")
         return False
 
-        time = params["time"]
-        sensor_id = int(params["sensor_id"])
-        temperature = float(params["temperature"])
-        humidity = float(params["humidity"])
+    time = params["time"]
+    sensor_id = int(params["sensor_id"])
+    temperature = float(params["temperature"])
+    humidity = float(params["humidity"])
 
-        cur.execute("""
-            INSERT INTO sensors (sensor_id, time, temperature, humidity)
-            VALUES (?, ?, ?, ?)
-            """, (sensor_id, time, temperature, humidity))
-        con.commit()
-        return True
+    cur.execute("""
+        INSERT INTO sensors (sensor_id, time, temperature, humidity)
+        VALUES (?, ?, ?, ?)
+        """, (sensor_id, time, temperature, humidity))
+    con.commit()
+    return True
 
-        # Connects to Google DNS server to determine the IP address
-        # used for communication
+    # Connects to Google DNS server to determine the IP address
+    # used for communication
 
 
 def get_ip():
