@@ -30,24 +30,24 @@ first_day = last_day.replace(day=1)
 
 data = [str(int(first_day.timestamp())), str(int(last_day.timestamp()))]
 
-
 con = sqlite3.connect(DATABASE_PATH)
 cur = con.cursor()
 
 res = cur.execute("SELECT * FROM sensors WHERE (time BETWEEN ? AND ?);", data)
 lines = res.fetchall()
+print(lines)
 
 month_year = today.strftime("%m_%y")
-file_name = month_year + "_raw_temp" + ".zip"
-with open(file_name, "w") as file:
+file_name = month_year + "_raw_temp"
+with open(file_name + ".csv", "w") as file:
     for line in lines:
         mp = map(float, line)
         mp = map(str, mp)
         file.write(",".join(list(mp)) + "\n")
 
 
-with zipfile.ZipFile(file_name, "w", zipfile.ZIP_DEFLATED) as zipped:
-    zipped.write(file_name)
+with zipfile.ZipFile("zip.zip", "w", zipfile.ZIP_DEFLATED) as zipped:
+    zipped.write(file_name + ".csv")
 
 msg = EmailMessage()
 
@@ -59,10 +59,10 @@ msg['From'] = EMAIL
 msg['To'] = DESTINATION
 
 try:
-    with open(file_name, 'rb') as file:
+    with open("zip.zip", 'rb') as file:
         data = file.read()
     msg.add_attachment(data, maintype='application',
-                       subtype='zip', filename=file_name)
+                       subtype='zip', filename=file_name + ".zip")
 
 except Exception as err:
     print(err)
@@ -75,4 +75,5 @@ try:
 except Exception as err:
     print(err)
 
-os.remove(file_name)
+os.remove(file_name + ".csv")
+os.remove("zip.zip")
