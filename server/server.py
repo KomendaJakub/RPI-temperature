@@ -7,6 +7,8 @@ import json
 import os
 import selectors
 import logging
+import requests
+import base64
 
 # Define classes
 
@@ -23,6 +25,9 @@ class Config():
         self.database_path = temp.get("DATABASE_PATH")
         self.buffer_size = int(temp.get("BUFFER_SIZE"))
         self.current_id = int(temp.get("CURRENT_ID"))
+        self.grafana_username = temp.get("GRAFANA_USERNAME")
+        self.grafana_password = temp.get("GRAFANA_PASSWORD")
+        self.grafana_UID = temp.get("GRAFANA_UID")
         self.magic = temp.get("MAGIC")
         self.version = int(temp.get("VERSION"))
 
@@ -34,6 +39,9 @@ class Config():
             "DATABASE_PATH": self.database_path,
             "BUFFER_SIZE": self.buffer_size,
             "CURRENT_ID": self.current_id,
+            "GRAFANA_USERNAME": self.grafana_username,
+            "GRAFANA_PASSWORD": self.grafana_password,
+            "GRAFANA_UID": self.grafana_UID,
             "MAGIC": self.magic,
             "VERSION": self.version
         }
@@ -86,8 +94,6 @@ def udp_command_handle(socket, mask):
 
         config.save(CONFIG_PATH)
 
-        # TODO: Create a graphana panel through the API
-
     elif command == "GET_IP":
         message = {
             "MAGIC": config.magic,
@@ -97,6 +103,7 @@ def udp_command_handle(socket, mask):
 
     message = str.encode(json.dumps(message, indent=4))
     udp_client.sendto(message, addr)
+    grafana_update(config, id-1)
     return True
 
 
@@ -155,6 +162,95 @@ def get_ip():
     ip = s.getsockname()[0]
     s.close()
     return ip
+
+
+def grafana_update(config, sensor_id):
+    GRAFANA_URL = "http://localhost:3000"
+    # Create Basic Authentication header
+    credentials = f"{config.grafana_username}:{config.grafana_password}"
+    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+    HEADERS = {
+        "Authorization": f"Basic {encoded_credentials}",
+        "Content-Type": "application/json"
+    }
+
+    url = f"""{GRAFANA_URL}/api/dashboards/uid/{config.grafana_UID}"""
+
+    x = requests.get(url, headers=HEADERS)
+
+    data = json.loads(x.text)
+
+    panels = data["dashboard"]["panels"]
+
+    with open("temperature.json", 'r') as file:
+        new_panel = json.load(file)
+
+    max_y = 0
+
+    for panel in panels:
+        if "gridPos" in panel:
+            panel_y = panel["gridPos"]["y"] + panel["gridPos"]["h"]
+            max_y = max(max_y, panel_y)
+
+    new_panel["gridPos"] = {
+        "x": 0,  # Leftmost position
+        "y": max_y,  # Below the tallest panel
+        # Default width (adjust as needed)
+        "w": new_panel.get("gridPos", {}).get("w", 12),
+        # Default height (adjust as needed)
+        "h": new_panel.get("gridPos", {}).get("h", 8)
+    }
+
+    new_panel["title"] = f"............ Teplota ID:{sensor_id}"
+    targets = new_panel["targets"][0]
+
+    print(type(targets))
+
+    targets["queryText"] = """SELECT time, temperature FROM sensors WHERE (time BETWEEN '${__from:date:seconds}' AND '${__to:date:seconds}') AND sensor_id = """ + str(
+        sensor_id)
+
+    targets["rawQueryText"] = """SELECT time, temperature FROM sensors WHERE (time BETWEEN '${__from:date:seconds}' AND '${__to:date:seconds}') AND sensor_id = """ + str(
+        sensor_id)
+
+    panels.append(new_panel)
+
+    with open("humidity.json", "r") as file:
+        new_humidity = json.load(file)
+
+    new_humidity["gridPos"] = {
+        "x": new_panel.get("gridPos", {}).get("w", 12),  # Leftmost position
+        "y": max_y,  # Below the tallest panel
+        # Default width (adjust as needed)
+        "w": new_panel.get("gridPos", {}).get("w", 12),
+        # Default height (adjust as needed)
+        "h": new_panel.get("gridPos", {}).get("h", 8)
+    }
+
+    new_humidity["title"] = f"............ Vlhkost ID:{sensor_id}"
+    print(json.dumps(new_humidity["targets"], indent=4))
+    hum_targets = new_humidity["targets"][0]
+
+    hum_targets["queryText"] = "SELECT time, humidity FROM sensors WHERE (time BETWEEN '${__from:date:seconds}' AND '${__to:date:seconds}') AND sensor_id = " + str(
+        sensor_id)
+
+    hum_targets["rawQueryText"] = "SELECT time, humidity FROM sensors WHERE (time BETWEEN '${__from:date:seconds}' AND '${__to:date:seconds}') AND sensor_id = " + str(
+        sensor_id)
+
+    panels.append(new_humidity)
+
+    minimal_payload = {
+        "dashboard": {
+            "title": "Temperatures",  # Explicit non-empty title
+            "panels": panels,
+            "uid": config.grafana_UID
+        },
+        "overwrite": True,
+        "folderId": 0
+    }
+
+    post_url = f"{GRAFANA_URL}/api/dashboards/db"
+
+    response = requests.post(post_url, headers=HEADERS, json=minimal_payload)
 
 
 if __name__ == "__main__":

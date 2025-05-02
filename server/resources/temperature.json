@@ -1,0 +1,131 @@
+{
+        "datasource": {
+            "type": "frser-sqlite-datasource",
+            "uid": "de3c1b23m7d34c"
+        },
+        "fieldConfig": {
+            "defaults": {
+                "color": {
+                    "mode": "palette-classic"
+                },
+                "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                        "legend": false,
+                        "tooltip": false,
+                        "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false,
+                    "stacking": {
+                        "group": "A",
+                        "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                        "mode": "off"
+                    }
+                },
+                "mappings": [],
+                "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                        {
+                            "color": "green",
+                            "value": null
+                        },
+                        {
+                            "color": "red",
+                            "value": 80
+                        }
+                    ]
+                }
+            },
+            "overrides": [
+                {
+                    "matcher": {
+                        "id": "byName",
+                        "options": "humidity"
+                    },
+                    "properties": [
+                        {
+                            "id": "color",
+                            "value": {
+                                "fixedColor": "semi-dark-blue",
+                                "mode": "fixed"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "matcher": {
+                        "id": "byName",
+                        "options": "temperature"
+                    },
+                    "properties": [
+                        {
+                            "id": "color",
+                            "value": {
+                                "fixedColor": "semi-dark-red",
+                                "mode": "fixed"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+        },
+        "id": 1,
+        "options": {
+            "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+            },
+            "tooltip": {
+                "hideZeros": false,
+                "mode": "single",
+                "sort": "none"
+            }
+        },
+        "pluginVersion": "11.5.2",
+        "targets": [
+            {
+                "datasource": {
+                    "type": "frser-sqlite-datasource",
+                    "uid": "de3c1b23m7d34c"
+                },
+                "queryText": "SELECT time, temperature FROM sensors WHERE (time BETWEEN '${__from:date:seconds}' AND '${__to:date:seconds}') AND sensor_id = 2",
+                "queryType": "table",
+                "rawQueryText": "SELECT time, temperature FROM sensors WHERE (time BETWEEN '${__from:date:seconds}' AND '${__to:date:seconds}') AND sensor_id = 2",
+                "refId": "A",
+                "timeColumns": [
+                    "time",
+                    "ts"
+                ]
+            }
+        ],
+        "title": "Sklad Teplota ID:2",
+        "type": "timeseries"
+}
