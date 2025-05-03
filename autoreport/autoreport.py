@@ -35,7 +35,6 @@ cur = con.cursor()
 
 res = cur.execute("SELECT * FROM sensors WHERE (time BETWEEN ? AND ?);", data)
 lines = res.fetchall()
-print(lines)
 
 month_year = today.strftime("%m_%y")
 file_name = month_year + "_raw_temp"

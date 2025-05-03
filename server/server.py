@@ -93,6 +93,9 @@ def udp_command_handle(socket, mask):
         config.current_id += 1
 
         config.save(CONFIG_PATH)
+        message = str.encode(json.dumps(message, indent=4))
+        udp_client.sendto(message, addr)
+        grafana_update(config, config.current_id - 1)
 
     elif command == "GET_IP":
         message = {
@@ -101,9 +104,9 @@ def udp_command_handle(socket, mask):
             "TCP_PORT": config.tcp_port,
         }
 
-    message = str.encode(json.dumps(message, indent=4))
-    udp_client.sendto(message, addr)
-    grafana_update(config, id-1)
+        message = str.encode(json.dumps(message, indent=4))
+        udp_client.sendto(message, addr)
+
     return True
 
 
@@ -165,6 +168,7 @@ def get_ip():
 
 
 def grafana_update(config, sensor_id):
+    print(os.getcwd())
     GRAFANA_URL = "http://localhost:3000"
     # Create Basic Authentication header
     credentials = f"{config.grafana_username}:{config.grafana_password}"
@@ -182,7 +186,8 @@ def grafana_update(config, sensor_id):
 
     panels = data["dashboard"]["panels"]
 
-    with open("temperature.json", 'r') as file:
+
+    with open("resources/temperature.json", 'r') as file:
         new_panel = json.load(file)
 
     max_y = 0
@@ -214,7 +219,7 @@ def grafana_update(config, sensor_id):
 
     panels.append(new_panel)
 
-    with open("humidity.json", "r") as file:
+    with open("resources/humidity.json", "r") as file:
         new_humidity = json.load(file)
 
     new_humidity["gridPos"] = {
