@@ -49,7 +49,8 @@ last_month = res.fetchone()[0]
 last_month = dt.datetime.strptime(last_month, "%m_%Y")
 doc = docx.Document()
 doc.add_heading(
-    f"Meranie teploty a vlhkosti {last_month.strftime("%m/%y")}", 0)
+    f"Meranie teploty a vlhkosti "
+    f"{last_month.strftime("%m/%y")}", 0)
 last_paragraph = doc.paragraphs[-1]
 last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
