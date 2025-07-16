@@ -5,9 +5,17 @@ import sqlite3
 import zipfile
 import os
 import json
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter
+import io
+import tempfile
 
 import smtplib
 from email.message import EmailMessage
+import docx
+from docx.shared import Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 DIR_PATH = os.path.dirname(__file__)
@@ -22,49 +30,105 @@ MAIL_SERVER = config["MAIL_SERVER"]
 DESTINATION = config["DESTINATION"]
 DATABASE_PATH = config["DATABASE_PATH"]
 
-today = dt.datetime.now()
-last_day = today.replace(day=1, hour=23, minute=59,
-                         second=59, microsecond=0) - dt.timedelta(days=1)
-
-first_day = last_day.replace(day=1)
-
-data = [str(int(first_day.timestamp())), str(int(last_day.timestamp()))]
-
 con = sqlite3.connect(DATABASE_PATH)
 cur = con.cursor()
 
-res = cur.execute("SELECT * FROM sensors WHERE (time BETWEEN ? AND ?);", data)
+first_day_last_month = "strftime('%s', date('now', 'start of month', '-1 month'))"
+last_day_last_month = "strftime('%s', date('now', 'start of month', '-1 day'))"
+
+
+res = cur.execute(f"SELECT DISTINCT sensor_id FROM sensors "
+                  f"WHERE (time BETWEEN {first_day_last_month} "
+                  f"AND {last_day_last_month}) ORDER BY sensor_id;")
+sensors = res.fetchall()
+buffer = io.BytesIO()
+
+res = cur.execute(
+    f"SELECT strftime('%m_%Y', date('now', 'start of month', '-1 month'))")
+last_month = res.fetchone()[0]
+last_month = dt.datetime.strptime(last_month, "%m_%Y")
+doc = docx.Document()
+doc.add_heading(
+    f"Meranie teploty a vlhkosti {last_month.strftime("%m/%y")}", 0)
+last_paragraph = doc.paragraphs[-1]
+last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+
+for sensor in sensors:
+    sensor = sensor[0]
+    res = pd.read_sql(f"SELECT time, temperature, humidity FROM sensors "
+                      f"WHERE sensor_id=? AND "
+                      f"(time BETWEEN {first_day_last_month} AND {last_day_last_month})", con, params=[sensor])
+    res["time"] = pd.to_datetime(res["time"], unit="s")
+    fig, ax1 = plt.subplots()
+    ax1.scatter(res["time"], res["temperature"], color="red", s=0.1)
+    ax1.set_xlabel("Day", fontsize=12)
+    ax1.set_ylabel("Temperature (°C)", color="red", fontsize=12)
+    ax1.tick_params(axis="y", labelcolor="red")
+    ax1.xaxis.set_major_formatter(DateFormatter("%d"))
+
+    ax2 = ax1.twinx()
+    ax2.scatter(res["time"], res["humidity"], color="blue", s=0.1)
+    ax2.set_ylabel("Relative Humidity (%)", color="blue", fontsize=12)
+    ax2.tick_params(axis="y", labelcolor="blue")
+
+    plt.title(f"Temperature and humidity "
+              f"{last_month.strftime("%m/%y")} sensor = {sensor}")
+    plt.savefig(buffer, dpi=600)
+    buffer.seek(0, io.SEEK_SET)
+    doc.add_picture(buffer, width=Inches(5))
+    buffer.seek(0, io.SEEK_SET)
+    buffer.truncate(0)
+    last_paragraph = doc.paragraphs[-1]
+    last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+buffer.close()
+report = tempfile.TemporaryFile()
+doc.save(report)
+
+res = cur.execute(f"SELECT * FROM sensors "
+                  f"WHERE (time BETWEEN {first_day_last_month} AND {last_day_last_month});")
 lines = res.fetchall()
 
-month_year = today.strftime("%m_%y")
-file_name = month_year + "_raw_temp"
-with open(file_name + ".csv", "w") as file:
-    for line in lines:
-        mp = map(float, line)
-        mp = map(str, mp)
-        file.write(",".join(list(mp)) + "\n")
+raw_data = tempfile.TemporaryFile()
+for line in lines:
+    mp = map(float, line)
+    mp = map(str, mp)
+    string = ",".join(list(mp)) + "\n"
+    byte = string.encode(encoding="utf-8")
+    raw_data.write(byte)
 
 
-with zipfile.ZipFile("zip.zip", "w", zipfile.ZIP_DEFLATED) as zipped:
-    zipped.write(file_name + ".csv")
+zipf = tempfile.NamedTemporaryFile()
+name = zipf.name
+report.seek(0, io.SEEK_SET)
+raw_data.seek(0, io.SEEK_SET)
+with zipfile.ZipFile(zipf, "w", zipfile.ZIP_DEFLATED) as zipped:
+    zipped.writestr(
+        f"report_{last_month.strftime("%m_%y")}.docx", report.read())
+    zipped.writestr(
+        f"raw_data_{last_month.strftime("%m_%y")}.csv", raw_data.read())
+
+
+report.close()
+raw_data.close()
 
 msg = EmailMessage()
 
-msg.set_content(f"""Dobrý deň, \n Prosím pripravte správu z interného merania teploty a vlhkosti za mesiac {month_year.replace(
-    "_", "/")} podľa manuálu. \n V prílohe nájdete dáta, ktoré treba priložiť. \n Ďakujem! \n\n\n Toto je automatizovaná správa, prosím neodpovedajte na ňu.""")
+msg.set_content(f"Report merania za obdobie {last_month.strftime("%m/%y")}. "
+                f"Toto je automatizovaná správa, prosím neodpovedajte na ňu.")
 
-msg['Subject'] = "Dáta z merania " + month_year
+msg['Subject'] = f"Report merania teploty a vlhkosti {
+    last_month.strftime("%m/%y")}"
+f"{last_month.strftime("%m/%y")}"
 msg['From'] = EMAIL
 msg['To'] = DESTINATION
 
-try:
-    with open("zip.zip", 'rb') as file:
-        data = file.read()
-    msg.add_attachment(data, maintype='application',
-                       subtype='zip', filename=file_name + ".zip")
+with open(name, "rb") as zipf:
+    data = zipf.read()
+    msg.add_attachment(data, maintype="application",
+                       subtype='zip', filename=f"meranie_{last_month.strftime("%m_%y")}.zip")
 
-except Exception as err:
-    print(err)
 
 try:
     with smtplib.SMTP_SSL(MAIL_SERVER, 465) as smtp:
@@ -73,6 +137,3 @@ try:
 
 except Exception as err:
     print(err)
-
-os.remove(file_name + ".csv")
-os.remove("zip.zip")
