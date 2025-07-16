@@ -74,7 +74,7 @@ for sensor in sensors:
     ax2.tick_params(axis="y", labelcolor="blue")
 
     plt.title(f"Temperature and humidity "
-              f"{last_month.strftime("%m/%y")} sensor = {sensor}")
+              f"{last_month.strftime('%m/%y')} sensor = {sensor}")
     plt.savefig(buffer, dpi=600)
     buffer.seek(0, io.SEEK_SET)
     doc.add_picture(buffer, width=Inches(5))
