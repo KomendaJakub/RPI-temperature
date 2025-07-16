@@ -120,7 +120,7 @@ msg.set_content(f"Report merania za obdobie {last_month.strftime('%m/%y')}. "
                 f"Toto je automatizovaná správa, prosím neodpovedajte na ňu.")
 
 msg['Subject'] = f"Report merania teploty a vlhkosti "
-f"{last_month.strftime("%m/%y")}"
+f"{last_month.strftime('%m/%y')}"
 msg['From'] = EMAIL
 msg['To'] = DESTINATION
 
