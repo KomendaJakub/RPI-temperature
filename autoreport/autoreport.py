@@ -106,9 +106,9 @@ report.seek(0, io.SEEK_SET)
 raw_data.seek(0, io.SEEK_SET)
 with zipfile.ZipFile(zipf, "w", zipfile.ZIP_DEFLATED) as zipped:
     zipped.writestr(
-        f"report_{last_month.strftime("%m_%y")}.docx", report.read())
+        f"report_{last_month.strftime('%m_%y')}.docx", report.read())
     zipped.writestr(
-        f"raw_data_{last_month.strftime("%m_%y")}.csv", raw_data.read())
+        f"raw_data_{last_month.strftime('%m_%y')}.csv", raw_data.read())
 
 
 report.close()
@@ -116,7 +116,7 @@ raw_data.close()
 
 msg = EmailMessage()
 
-msg.set_content(f"Report merania za obdobie {last_month.strftime("%m/%y")}. "
+msg.set_content(f"Report merania za obdobie {last_month.strftime('%m/%y')}. "
                 f"Toto je automatizovaná správa, prosím neodpovedajte na ňu.")
 
 msg['Subject'] = f"Report merania teploty a vlhkosti "
@@ -127,7 +127,7 @@ msg['To'] = DESTINATION
 with open(name, "rb") as zipf:
     data = zipf.read()
     msg.add_attachment(data, maintype="application",
-                       subtype='zip', filename=f"meranie_{last_month.strftime("%m_%y")}.zip")
+                       subtype='zip', filename=f"meranie_{last_month.strftime('%m_%y')}.zip")
 
 
 try:
