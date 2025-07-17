@@ -4,6 +4,10 @@
   "PASSWORD"      : null,
   "MAIL_SERVER"   : null,
   "DESTINATION"   : null,
-  "DATABASE_PATH" : null
+  "DATABASE_PATH" : null,
+  "GRAFANA_USERNAME" : null,
+  "GRAFANA_PASSWORD" : null,
+  "GRAFANA_UID"      : null,
+  "GRAFANA_URL"      : null
 
 }

@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
 import io
 import tempfile
+import base64
+import requests
 
 import smtplib
 from email.message import EmailMessage
@@ -29,6 +31,37 @@ PASSWORD = config["PASSWORD"]
 MAIL_SERVER = config["MAIL_SERVER"]
 DESTINATION = config["DESTINATION"]
 DATABASE_PATH = config["DATABASE_PATH"]
+GRAFANA_USERNAME = config["GRAFANA_USERNAME"]
+GRAFANA_PASSWORD = config["GRAFANA_PASSWORD"]
+GRAFANA_UID = config["GRAFANA_UID"]
+GRAFANA_URL = config["GRAFANA_URL"]
+
+
+def get_names(sensors: [int]):
+    credentials = f"{GRAFANA_USERNAME}:{GRAFANA_PASSWORD}"
+    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+    HEADERS = {
+        "Authorization": f"Basic {encoded_credentials}",
+        "Content-Type": "application/json"
+    }
+
+    url = f"""{GRAFANA_URL}/api/dashboards/uid/{GRAFANA_UID}"""
+    x = requests.get(url, headers=HEADERS)
+
+    data = json.loads(x.text)
+    panels = data["dashboard"]["panels"]
+    names = {}
+    for panel in panels:
+        text = panel["title"].strip()
+        title = text.split(" ")[0]
+        id = int(text.split("ID:")[-1])
+        if id not in names:
+            if title.count(".") == len(title):
+                title = f"sensor ID: {id}"
+            names[id] = title
+
+    return names
+
 
 con = sqlite3.connect(DATABASE_PATH)
 cur = con.cursor()
@@ -54,9 +87,11 @@ doc.add_heading(
 last_paragraph = doc.paragraphs[-1]
 last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
+sensors = [sensor[0] for sensor in sensors]
+names = get_names(sensors)
+
 
 for sensor in sensors:
-    sensor = sensor[0]
     res = pd.read_sql(f"SELECT time, temperature, humidity FROM sensors "
                       f"WHERE sensor_id=? AND "
                       f"(time BETWEEN {first_day_last_month} AND {last_day_last_month})", con, params=[sensor])
@@ -73,8 +108,7 @@ for sensor in sensors:
     ax2.set_ylabel("Relative Humidity (%)", color="blue", fontsize=12)
     ax2.tick_params(axis="y", labelcolor="blue")
 
-    plt.title(f"Temperature and humidity "
-              f"{last_month.strftime('%m/%y')} sensor = {sensor}")
+    plt.title(f"{names[int(sensor)]} {last_month.strftime('%m/%y')}")
     plt.savefig(buffer, dpi=600)
     buffer.seek(0, io.SEEK_SET)
     doc.add_picture(buffer, width=Inches(5))
@@ -116,7 +150,7 @@ raw_data.close()
 
 msg = EmailMessage()
 
-msg.set_content(f"Report merania za obdobie {last_month.strftime('%m/%y')}. "
+msg.set_content(f"Report merania za obdobie {last_month.strftime('%m/%y')}.\n"
                 f"Toto je automatizovaná správa, prosím neodpovedajte na ňu.")
 
 msg['Subject'] = f"Report merania teploty a vlhkosti "
